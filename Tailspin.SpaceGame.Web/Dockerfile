@@ -11,12 +11,12 @@ COPY ["Tailspin.SpaceGame.Web.csproj", "Tailspin.SpaceGame.Web/"]
 RUN dotnet restore "Tailspin.SpaceGame.Web/Tailspin.SpaceGame.Web.csproj"
 COPY . .
 WORKDIR "/src/Tailspin.SpaceGame.Web"
-RUN dotnet build "Tailspin.SpaceGame.Web.csproj" -c Release -o /app/build
 
-FROM build AS publish
+# Directly run dotnet publish, no need for dotnet build
 RUN dotnet publish "Tailspin.SpaceGame.Web.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Tailspin.SpaceGame.Web.dll"]
+
