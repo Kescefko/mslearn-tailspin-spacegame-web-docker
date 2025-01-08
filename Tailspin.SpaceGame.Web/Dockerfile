@@ -1,21 +1,20 @@
-# See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
+# Use the SDK image for building the app
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
-COPY ["Tailspin.SpaceGame.Web.csproj", "Tailspin.SpaceGame.Web/"]
-RUN dotnet restore "Tailspin.SpaceGame.Web/Tailspin.SpaceGame.Web.csproj"
+WORKDIR /app
+
+# Copy csproj and restore as distinct layers
+COPY Tailspin.SpaceGame.Web.csproj .
+RUN dotnet restore
+
+# Copy everything else and build the project
 COPY . .
-WORKDIR "/src/Tailspin.SpaceGame.Web"
+RUN dotnet build -c Release -o /app/build
 
-# Directly run dotnet publish, no need for dotnet build
-RUN dotnet publish "Tailspin.SpaceGame.Web.csproj" -c Release -o /app/publish
+# Publish the project
+RUN dotnet publish -c Release -o /app/publish
 
-FROM base AS final
+# Use the runtime image for running the app
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Tailspin.SpaceGame.Web.dll"]
